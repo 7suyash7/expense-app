@@ -1,51 +1,92 @@
-const buttonCtr = document.querySelector("#btnCounter");
 const headingEl = document.querySelector("#headingTotal");
 const inputDescEl = document.querySelector("#inputDesc");
-const userInput = document.getElementById("userInput");
+const inputElement = document.querySelector("#inputAmount");
 const expenseTableEl = document.querySelector("#expenseTable");
-
-buttonCtr.addEventListener("click", addExpenseToTotal, false);
-
 let totalExpense = 0;
 
 headingEl.textContent = totalExpense;
 
-const allExpenses = [];
+let allExpenses = [];
 
-function addExpenseToTotal () {
-    const expenseItem = {};
-    const inputAmount = userInput.value;
-    const inputDesc = inputDescEl.value;
-    const expense = parseInt(inputAmount, 10);
-    expenseItem.desc = inputDesc;
+function addExpenseToTotal() {
+  const expenseItem = {};
+  const textAmount = inputElement.value;
+  const textDesc = inputDescEl.value;
+  const expense = parseInt(textAmount, 10);
+  if (textDesc !== "" && !isNaN(expense) && expense > 0) {
+    expenseItem.desc = textDesc;
     expenseItem.amount = expense;
+    expenseItem.moment = new Date();
+
+    totalExpense += expense;
+    updateTotal();
     allExpenses.push(expenseItem);
-    totalExpense = totalExpense + expense;
-    const someText = `The expense is : ${totalExpense}`
-    headingEl.textContent = someText;
 
-//    const data1 = allExpenses[0];
-//    const data2 = allExpenses[1];
+    renderlist(allExpenses);
+    inputElement.value = "";
+    inputDescEl.value = "";
+  }
+}
+const element = document.querySelector("#btnAddExpense");
+element.addEventListener("click", addExpenseToTotal, false);
+document.addEventListener("keypress", function (event) {
+  if (event.keyCode === 13 || event.which === 13) {
+    addExpenseToTotal();
+  }
+});
 
-//    const data1Text = `Expense : ${data1.amount}   Desc: ${data1.desc}`;
-//   const data2Text =  `Expense  :  ${data2.amount} Desc: ${data2.desc}`;
-
-//    const tableText = `
-//       <div>${data1Text}</div>
-//       <div>${data2Text}</div>
-//    `
-
-     const allExpenseHTML = allExpenses.map(expense => {
-        return `<div>${expense.amount} :: ${expense.desc}</div>`
-
-    });
-    
-    const joinedAllExpenseHTML = allExpenseHTML.join("")
-
-    console.log(joinedAllExpenseHTML);
-
-   expenseTableEl.innerHTML = joinedAllExpenseHTML;
-
+function getDateString(momento) {
+  return momento.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
 }
 
+function updateTotal() {
+  let someText = `Total: ${totalExpense}`;
+  headingEl.textContent = someText;
+}
 
+function deleteItem(dateValue, amount) {
+  const newArr = allExpenses.filter(
+    expense => expense.moment.valueOf() !== dateValue
+  );
+  renderlist(newArr);
+  totalExpense -= amount;
+  updateTotal();
+}
+
+function renderlist(arrOfList) {
+  const allExpensesHTML = arrOfList.map(expense =>
+    createListItem(expense)
+  );
+  const joinedAllExpenseHTML = allExpensesHTML.join("");
+  expenseTableEl.innerHTML = joinedAllExpenseHTML;
+  allExpenses = arrOfList;
+}
+
+function createListItem({
+  desc,
+  amount,
+  moment
+}) {
+  return `
+            <li class="list-group-item d-flex justify-content-between">
+                    <div class="d-flex flex-column">
+                            ${desc}
+                        <small class="text-muted">${getDateString(
+                          moment
+                        )}</small>
+                    </div>
+                    <div>
+                        <span class="px-5">
+                                ${amount}
+                        </span>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteItem(${moment.valueOf()}, ${amount})">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </li>
+            `;
+}
